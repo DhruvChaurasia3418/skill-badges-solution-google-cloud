@@ -1,0 +1,27 @@
+gcloud beta container clusters create gmp-cluster --num-nodes=1 --zone us-central1-f --enable-managed-prometheus
+
+gcloud container clusters get-credentials gmp-cluster --zone us-central1-f
+
+kubectl create ns gmp-test
+
+kubectl -n gmp-test apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/prometheus-engine/v0.4.3-gke.0/examples/prometheus.yaml
+kubectl -n gmp-test get pod
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Create a config file named op-config.yaml
+vi op-config.yaml
+
+# Inside the config file, add the following content
+collection:
+  filter:
+    matchOneOf:
+    - '{job="prom-example"}'
+    - '{__name__=~"job:.+"}'
+
+# Upload the config file to Cloud Storage
+export PROJECT=$(gcloud config get-value project)
+gsutil mb -p $PROJECT gs://$PROJECT
+gsutil cp op-config.yaml gs://$PROJECT
+gsutil -m acl set -R -a public-read gs://$PROJECT
